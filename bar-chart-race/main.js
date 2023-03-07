@@ -1,7 +1,6 @@
 import './style.css'
 
 
-
 ////////////////////////////////////////////////////////////////
 // Constants
 const topN = 26; // show top N names
@@ -212,7 +211,7 @@ const drawTicker = (svg) => {
 
 async function main() {
 
-  data = await getData("/data.csv");
+  data = await getData("data.csv");
   names = getNames(data);
   const categories = getCategories(data);
   // const groupedData = groupData(data);

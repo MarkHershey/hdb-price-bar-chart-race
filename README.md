@@ -4,6 +4,7 @@
 
 -   Python 3.6+
 -   [pnpm](https://pnpm.io/installation)
+-   [Node.js](https://nodejs.org/en/)
 
 If you are on Linux/MacOS, you can install pnpm using the following command:
 
