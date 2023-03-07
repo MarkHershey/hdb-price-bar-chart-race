@@ -1,0 +1,70 @@
+"""
+Singapore Planning Areas
+Ref: https://en.wikipedia.org/wiki/Planning_Areas_of_Singapore#List_of_Planning_Areas
+"""
+
+_mapping = {
+    "Ang Mo Kio": "North-East",
+    "Bedok": "East",
+    "Bishan": "Central",
+    "Boon Lay": "West",
+    "Bukit Batok": "West",
+    "Bukit Merah": "Central",
+    "Bukit Panjang": "West",
+    "Bukit Timah": "Central",
+    "Central Water Catchment": "North",
+    "Changi": "East",
+    "Changi Bay": "East",
+    "Choa Chu Kang": "West",
+    "Clementi": "West",
+    "Downtown Core": "Central",
+    "Geylang": "Central",
+    "Hougang": "North-East",
+    "Jurong East": "West",
+    "Jurong West": "West",
+    "Kallang": "Central",
+    "KALLANG/WHAMPOA": "Central",
+    "Lim Chu Kang": "North",
+    "Mandai": "North",
+    "Marina East": "Central",
+    "Marina South": "Central",
+    "Marine Parade": "East",
+    "Museum": "Central",
+    "Newton": "Central",
+    "North-Eastern Islands": "North-East",
+    "Novena": "Central",
+    "Orchard": "Central",
+    "Outram": "Central",
+    "Pasir Ris": "East",
+    "Paya Lebar": "East",
+    "Pioneer": "West",
+    "Punggol": "North-East",
+    "Queenstown": "Central",
+    "River Valley": "Central",
+    "Rochor": "Central",
+    "Seletar": "North-East",
+    "Sembawang": "North",
+    "Sengkang": "North-East",
+    "Serangoon": "North-East",
+    "Simpang": "North",
+    "Singapore River": "Central",
+    "Southern Islands": "Central",
+    "Straits View": "Central",
+    "Sungei Kadut": "North",
+    "Tampines": "East",
+    "Tanglin": "Central",
+    "Tengah": "West",
+    "Toa Payoh": "Central",
+    "Tuas": "West",
+    "Western Islands": "West",
+    "Western Water Catchment": "West",
+    "Woodlands": "North",
+    "Yishun": "North",
+    "CENTRAL AREA": "Central",
+}
+
+_mapping = {k.upper(): v for k, v in _mapping.items()}
+
+
+def get_category_by_name(area):
+    return _mapping.get(area, "Unknown")
