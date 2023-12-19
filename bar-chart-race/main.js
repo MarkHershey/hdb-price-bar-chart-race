@@ -10,6 +10,9 @@ var names;
 var keyFramesGlobal;
 var prev;
 var next;
+var playProgress = 0;
+var palyPaused = false;
+
 const duration = 150; // animation duration between keyframes in milliseconds
 const margin = ({ top: 16, right: 6, bottom: 6, left: 0 });
 const barSize = 48;
@@ -206,10 +209,92 @@ const drawTicker = (svg) => {
 }
 
 
+async function updateAnimation(svg, updateAxis, updateBars, updateLabels, updateTicker, keyFramesIdx) {
+  // get the keyframe
+  const keyframe = keyFramesGlobal[keyFramesIdx];
+  // update the progress bar
+  playProgress = keyFramesIdx / keyFramesGlobal.length;
+
+  const transition = svg.transition()
+    .duration(duration)
+    .ease(d3.easeLinear);
+
+  // Extract the top bar’s value.
+  x.domain([0, keyframe[1][0].value]);
+
+  updateAxis(keyframe, transition);
+  updateBars(keyframe, transition);
+  updateLabels(keyframe, transition);
+  updateTicker(keyframe, transition);
+
+  await transition.end();
+}
+
+async function updateAnimationByProgress(svg, updateAxis, updateBars, updateLabels, updateTicker, progress) {
+  // progress is a number between 0 and 1 (0% and 100%)
+  if (progress < 0) progress = 0;
+  if (progress > 1) progress = 1;
+  // get the keyFramesIdx (rounding down)
+  var keyFramesIdx;
+  if (progress === 1) {
+    keyFramesIdx = keyFramesGlobal.length - 1;
+  } else if (progress === 0) {
+    keyFramesIdx = 0;
+  }
+  else {
+    keyFramesIdx = Math.floor(progress * keyFramesGlobal.length);
+  }
+  updateAnimation(svg, updateAxis, updateBars, updateLabels, updateTicker, keyFramesIdx);
+}
+
+async function playAnimationFromProgress(svg, updateAxis, updateBars, updateLabels, updateTicker, progress) {
+  // progress is a number between 0 and 1 (0% and 100%)
+  if (progress < 0) progress = 0;
+  if (progress > 1) progress = 1;
+  const keyFramesIdx = Math.floor(progress * keyFramesGlobal.length);
+  for (let i = keyFramesIdx; i < keyFramesGlobal.length; i++) {
+    await updateAnimation(svg, updateAxis, updateBars, updateLabels, updateTicker, i);
+    if (palyPaused) {
+      break;
+    }
+  }
+}
+
 ////////////////////////////////////////////////////////////////
 // Main
 
 async function main() {
+
+
+  // var svg = d3.select("#chart").append("svg")
+  //   .attr("width", width)
+  //   .attr("height", height);
+
+  // var progressBar = svg.append("rect")
+  //   .attr("width", 0)
+  //   .attr("height", progressBarHeight)
+  //   .attr("x", 0)
+  //   .attr("y", (height - progressBarHeight) / 2);
+
+  // var handle = svg.append("circle")
+  //   .attr("r", handleRadius)
+  //   .attr("cx", 0)
+  //   .attr("cy", height / 2)
+  //   .style("cursor", "pointer")
+  //   .call(d3.drag().on("drag", dragged));
+
+  // function dragged(event) {
+  //   var x = event.x;
+  //   x = Math.max(0, Math.min(width, x)); // constrain to bounds
+
+  //   handle.attr("cx", x);
+  //   progressBar.attr("width", x);
+
+  //   var progress = x / width;
+  //   // updateAnimation(progress);
+  // }
+
+
 
   data = await getData("data.csv");
   names = getNames(data);
@@ -268,24 +353,14 @@ async function main() {
     .style("font-size", "0.8em")
     .style("font-weight", "regular");
 
+  // get keyFramesGlobal length
+  const keyFramesLength = keyFramesGlobal.length;
+  updateAnimationByProgress(svg, updateAxis, updateBars, updateLabels, updateTicker, 1);
 
-
-  for (const keyframe of keyFramesGlobal) {
-    const transition = svg.transition()
-      .duration(duration)
-      .ease(d3.easeLinear);
-
-    // Extract the top bar’s value.
-    x.domain([0, keyframe[1][0].value]);
-
-    updateAxis(keyframe, transition);
-    updateBars(keyframe, transition);
-    updateLabels(keyframe, transition);
-    updateTicker(keyframe, transition);
-
-    await transition.end();
-  }
-
+  // wait for 2 seconds
+  await new Promise(r => setTimeout(r, 2000));
+  // play animation from 0 to 1
+  await playAnimationFromProgress(svg, updateAxis, updateBars, updateLabels, updateTicker, 0);
 
 }
 
