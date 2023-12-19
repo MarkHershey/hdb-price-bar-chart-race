@@ -364,7 +364,7 @@ async function main() {
   }
 
   const updateProgressBar = () => {
-    console.log("playProgress: ", playProgress);
+    // console.log("playProgress: ", playProgress);
     const position = progressToPosition(playProgress);
     handle.attr("cx", position);
     progressBar.attr("width", position);
