@@ -10,7 +10,7 @@ var names;
 var keyFramesGlobal;
 var prev;
 var next;
-var playProgress = 0;
+var playProgress = 0; // from 0 to 1
 var palyPaused = false;
 
 const duration = 150; // animation duration between keyframes in milliseconds
@@ -214,8 +214,7 @@ async function updateAnimation(svg, updateAxis, updateBars, updateLabels, update
   const keyframe = keyFramesGlobal[keyFramesIdx];
   // update the progress bar
   playProgress = keyFramesIdx / keyFramesGlobal.length;
-  // DEBUG: somehow the progress bar is updated without calling updateProgressBar()
-  // updateProgressBar();
+  updateProgressBar();
 
   const transition = svg.transition()
     .duration(duration)
@@ -255,7 +254,7 @@ async function playAnimationFromProgress(svg, updateAxis, updateBars, updateLabe
   if (progress >= 0.995) progress = 1;
   const keyFramesIdx = Math.floor(progress * keyFramesGlobal.length);
   for (let i = keyFramesIdx; i < keyFramesGlobal.length; i++) {
-    await updateAnimation(svg, updateAxis, updateBars, updateLabels, updateProgressBar, updateTicker, i);
+    await updateAnimation(svg, updateAxis, updateBars, updateLabels, updateTicker, updateProgressBar, i);
     if (palyPaused) {
       break;
     }
