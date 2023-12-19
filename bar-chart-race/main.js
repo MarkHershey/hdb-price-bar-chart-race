@@ -312,6 +312,7 @@ async function main() {
     .attr("height", 8)
     .attr("x", 0)
     .attr("y", barHeight / 2 - 4)
+    .attr("rx", 4)
     .attr("fill", "#45b69c");
 
   var handle = barSvg.append("circle")
@@ -343,7 +344,7 @@ async function main() {
   }
 
   const boundPosition = (position) => {
-    return Math.max(minPosition, Math.min(positionRange, position));
+    return Math.max(minPosition, Math.min(maxPosition, position));
   }
 
 
@@ -360,6 +361,7 @@ async function main() {
     progressBar.attr("width", position);
 
     playProgress = positionToProgress(position);
+    console.log("playProgress: ", (playProgress * 100).toFixed(2) + "%");
     updateAnimationByProgress(svg, updateAxis, updateBars, updateLabels, updateTicker, updateProgressBar, playProgress);
   }
 
