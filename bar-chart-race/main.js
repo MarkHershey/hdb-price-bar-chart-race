@@ -17,7 +17,7 @@ const duration = 150; // animation duration between keyframes in milliseconds
 const margin = ({ top: 16, right: 6, bottom: 6, left: 0 });
 const barSize = 48;
 const height = margin.top + barSize * topN + margin.bottom;
-const width = 1280;
+const width = 1800;
 const y = d3.scaleBand()
   .domain(d3.range(topN + 1))
   .rangeRound([margin.top, margin.top + barSize * (topN + 1 + 0.1)])
@@ -234,8 +234,8 @@ async function updateAnimation(svg, updateAxis, updateBars, updateLabels, update
 
 async function updateAnimationByProgress(svg, updateAxis, updateBars, updateLabels, updateTicker, updateProgressBar, progress) {
   // progress is a number between 0 and 1 (0% and 100%)
-  if (progress < 0) progress = 0;
-  if (progress > 1) progress = 1;
+  if (progress <= 0.001) progress = 0;
+  if (progress >= 0.995) progress = 1;
   // get the keyFramesIdx (rounding down)
   var keyFramesIdx;
   if (progress === 1) {
@@ -251,8 +251,8 @@ async function updateAnimationByProgress(svg, updateAxis, updateBars, updateLabe
 
 async function playAnimationFromProgress(svg, updateAxis, updateBars, updateLabels, updateTicker, updateProgressBar, progress) {
   // progress is a number between 0 and 1 (0% and 100%)
-  if (progress < 0) progress = 0;
-  if (progress > 1) progress = 1;
+  if (progress <= 0.001) progress = 0;
+  if (progress >= 0.995) progress = 1;
   const keyFramesIdx = Math.floor(progress * keyFramesGlobal.length);
   for (let i = keyFramesIdx; i < keyFramesGlobal.length; i++) {
     await updateAnimation(svg, updateAxis, updateBars, updateLabels, updateProgressBar, updateTicker, i);
@@ -270,7 +270,7 @@ async function main() {
   /////////////////////////////////////////////////////////////////////////////
   // Play Text Button
 
-  const playText = "Play";
+  const playText = " Play ";
   const pauseText = "Pause";
 
   const playButton = d3.select("#control")
@@ -295,10 +295,10 @@ async function main() {
   // Draggable Progress Bar
 
   const barWidth = 800;
-  const barHeight = 20;
+  const barHeight = 22;
   const handleRadius = barHeight / 2 - 2;
-  const minPosition = handleRadius;
-  const maxPosition = barWidth - handleRadius;
+  const minPosition = handleRadius + 2;
+  const maxPosition = barWidth - minPosition;
   const positionRange = maxPosition - minPosition;
 
 
@@ -353,6 +353,7 @@ async function main() {
     handle.attr("cx", position);
     progressBar.attr("width", position);
     palyPaused = true;
+    playButton.text(playText);
   }
 
   function dragEnded(event) {
