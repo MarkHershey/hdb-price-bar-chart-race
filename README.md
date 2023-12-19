@@ -4,7 +4,7 @@
 
 This project is an animated visualization that showcases how Singapore's public housing (HDB) flat prices have changed over the years (2012 - present) per town. The visualization takes the form of a bar chart race, which is a dynamic chart that displays the ranking of values over time.
 
-Data source: [HDB Resale Flat Prices](https://data.gov.sg/dataset/resale-flat-prices)
+Data source: [HDB Resale Flat Prices](https://beta.data.gov.sg/collections/189/view)
 
 ## Development
 

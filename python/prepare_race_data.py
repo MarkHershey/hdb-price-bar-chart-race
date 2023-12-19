@@ -52,12 +52,13 @@ def get_clean_data(force_update=False):
 
 def main(force_update=False):
     # ask user if they want to force update
-    if not force_update:
-        force_update = (
-            input("Force fetching the latest data from data.gov.sg? (y/n): ").lower()
-            == "y"
-        )
+    # if not force_update:
+    #     force_update = (
+    #         input("Force fetching the latest data from data.gov.sg? (y/n): ").lower()
+    #         == "y"
+    #     )
 
+    # data = get_clean_data(force_update=force_update)
     data = get_clean_data(force_update=force_update)
     print(
         f"STATS: {len(data)} records dated from {data[0]['month']} to {data[-1]['month']}"
