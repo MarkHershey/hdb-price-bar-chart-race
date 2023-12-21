@@ -277,6 +277,7 @@ async function main() {
     .attr("id", "playButton")
     .text(pauseText)
     .style("margin", "20px")
+    .style("min-width", "100px")
     .on("click", function () {
       if (this.textContent === playText) {
         this.textContent = pauseText;
