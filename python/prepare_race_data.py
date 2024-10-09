@@ -2,6 +2,7 @@ import csv
 import shutil
 from pathlib import Path
 from typing import *
+from rich import print
 
 from data_utils import get_data
 from singapore import get_category_by_name
@@ -16,11 +17,6 @@ RACE_CSV = DATA_DIR / "race_data.csv"
 
 
 def get_clean_data(force_update=False):
-    if CLEAN_CSV.exists() and not force_update:
-        with CLEAN_CSV.open() as f:
-            reader = csv.DictReader(f)
-            return list(reader)
-
     data: List[dict] = get_data(force_update=force_update)
     # we only keep month, town, floor_area_sqm, resale_price
     # and compute resale_price_per_sqm
@@ -85,9 +81,9 @@ def main(force_update=False):
         "category",  # str: get_category_by_name(town)
     ]
 
-    tmp_data_dict: Dict[
-        str, Dict[str, List[int]]
-    ] = {}  # key: town, value: dict ( key: month, value: list of resale_price_per_sqm)
+    tmp_data_dict: Dict[str, Dict[str, List[int]]] = (
+        {}
+    )  # key: town, value: dict ( key: month, value: list of resale_price_per_sqm)
     race_data_rows: List[Dict[str, Union[str, int]]] = []
 
     # Compute resale price per sqm for each row

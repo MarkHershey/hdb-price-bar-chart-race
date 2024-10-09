@@ -1,0 +1,21 @@
+{
+    "collectionId": "189",
+    "createdAt": "2015-09-22T15:05:30+08:00",
+    "name": "Resale Flat Prices",
+    "description": "Resale transacted prices. \r\nPrior to March 2012, data is based on date of approval for the resale transactions.  \r\nFor March 2012 onwards, the data is based on date of registration for the resale transactions.",
+    "lastUpdatedAt": "2024-10-09T09:07:05+08:00",
+    "coverageStart": "1990-01-01T08:00:00+08:00",
+    "coverageEnd": "2024-04-08T00:00:00+08:00",
+    "frequency": "monthly",
+    "sources": [
+        "Housing and Development Board"
+    ],
+    "managedBy": "Housing and Development Board",
+    "childDatasets": [
+        "d_8b84c4ee58e3cfc0ece0d773c8ca6abc",
+        "d_43f493c6c50d54243cc1eab0df142d6a",
+        "d_2d5ff9ea31397b66239f245f57751537",
+        "d_ebc5ab87086db484f88045b47411ebc5",
+        "d_ea9ed51da2787afaf8e51f827c304208"
+    ]
+}

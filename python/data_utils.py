@@ -1,93 +1,144 @@
 import csv
+import json
 from pathlib import Path
+from typing import List
 
 import requests
+from rich import print
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-# old: https://data.gov.sg/dataset/resale-flat-prices
-# new: https://beta.data.gov.sg/collections/189/view
-URI = "https://data.gov.sg/dataset/7a339d20-3c57-4b11-a695-9348adfd7614/download"
 
-ZIP_PATH = DATA_DIR / "resale-flat-prices.zip"
-
-# https://beta.data.gov.sg/datasets/d_2d5ff9ea31397b66239f245f57751537/view
-CSV1 = DATA_DIR / "ResaleFlatPricesBasedonRegistrationDateFromMar2012toDec2014.csv"
-# https://beta.data.gov.sg/datasets/d_ea9ed51da2787afaf8e51f827c304208/view
-CSV2 = DATA_DIR / "ResaleFlatPricesBasedonRegistrationDateFromJan2015toDec2016.csv"
-# https://beta.data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view
-CSV3 = DATA_DIR / "ResaleflatpricesbasedonregistrationdatefromJan2017onwards.csv"
-
-
-def remove_download():
-    # remove data if it exists
-    print("Removing existing data...")
-    if ZIP_PATH.exists():
-        ZIP_PATH.unlink()
-    if CSV1.exists():
-        CSV1.unlink()
-    if CSV2.exists():
-        CSV2.unlink()
-    if CSV3.exists():
-        CSV3.unlink()
-    print("Done! Previous download removed.")
-
-
-def download_data():
+def update_collection(collectionId: int = 189) -> None:
     """
-    Download data if it doesn't exist
+    Update the collection if it is not up-to-date.
     """
-    if not CSV1.exists() or not CSV2.exists() or not CSV3.exists():
-        print("Missing data files!")
-        print(
-            f"Please manually download the data from the link below and place it in {DATA_DIR}"
-        )
-        print("https://beta.data.gov.sg/collections/189/view")
+    collection_metadata_path = DATA_DIR / f"meta_collection_{collectionId}.json"
+    if collection_metadata_path.exists():
+        with collection_metadata_path.open() as f:
+            collection_metadata = json.load(f)
+            previous_last_updated = collection_metadata.get("lastUpdatedAt", "")
     else:
-        print("OK! Data files exist.")
-    return
-    if not ZIP_PATH.exists():
-        try:
-            response = requests.get(URI)
-            with ZIP_PATH.open("wb") as f:
-                f.write(response.content)
-            print(f"OK! Downloaded data to {ZIP_PATH}")
-        except Exception as e:
-            print(f"Error: {e}")
-    else:
-        print(f"OK! Data already exists at {ZIP_PATH}")
+        previous_last_updated = ""
 
-    # unzip data if it doesn't exist
-    if not CSV1.exists() or not CSV2.exists() or not CSV3.exists():
-        try:
-            import zipfile
+    url = f"https://api-production.data.gov.sg/v2/public/api/collections/{collectionId}/metadata"
+    response = requests.get(url)
+    response.raise_for_status()
+    collection_metadata = response.json().get("data", {}).get("collectionMetadata")
+    if not collection_metadata:
+        raise ValueError("Collection Metadata Not Found!")
 
-            with zipfile.ZipFile(ZIP_PATH, "r") as zip_ref:
-                zip_ref.extractall(DATA_DIR)
-            print(f"OK! Data unzipped to {DATA_DIR}")
-        except Exception as e:
-            print(f"Error: {e}")
+    last_updated = collection_metadata.get("lastUpdatedAt", "")
+    if previous_last_updated != last_updated:
+        print(f"Updating collection: {collectionId}")
+        print(f"    Previous Last Updated: {previous_last_updated}")
+        print(f"    Current Last Updated : {last_updated}")
+        # save metadata
+        with collection_metadata_path.open("w") as f:
+            json.dump(collection_metadata, f, indent=4)
     else:
-        print(f"OK! Data already unzipped at {DATA_DIR}")
+        print(f"Collection {collectionId} is up-to-date.")
+        return
+
+    child_dataset_ids: List[str] = collection_metadata.get("childDatasets", [])
+
+    known_child = {
+        "d_ebc5ab87086db484f88045b47411ebc5": 0,  # Resale Flat Prices (Based on Approval Date), 1990 - 1999
+        "d_43f493c6c50d54243cc1eab0df142d6a": 1,  # Resale Flat Prices (Based on Approval Date), 2000 - Feb 2012
+        "d_2d5ff9ea31397b66239f245f57751537": 2,  # Resale Flat Prices (Based on Registration Date), From Mar 2012 to Dec 2014
+        "d_ea9ed51da2787afaf8e51f827c304208": 3,  # Resale Flat Prices (Based on Registration Date), From Jan 2015 to Dec 2016
+        "d_8b84c4ee58e3cfc0ece0d773c8ca6abc": 4,  # Resale flat prices based on registration date from Jan-2017 onwards
+    }
+
+    for child in child_dataset_ids:
+        if child in known_child:
+            update_dataset(child)
+        else:
+            print(f"[WARNING] Unknown child dataset: {child}")
+
+
+def update_dataset(datasetId: str) -> None:
+    """
+    Update the dataset if it is not up-to-date.
+    """
+    metadata_cache_path = DATA_DIR / f"meta_{datasetId}.json"
+    data_filepath = DATA_DIR / f"{datasetId}.csv"
+    if metadata_cache_path.exists() and data_filepath.exists():
+        with metadata_cache_path.open() as f:
+            metadata_cache = json.load(f)
+            previous_last_updated = metadata_cache.get("lastUpdatedAt", "")
+    else:
+        previous_last_updated = ""
+    # Get metadata
+    url = f"https://api-production.data.gov.sg/v2/public/api/datasets/{datasetId}/metadata"
+    response = requests.get(url, headers={})
+    response.raise_for_status()
+    data = response.json().get("data", {})
+    lastUpdatedAt = data.get("lastUpdatedAt", "")
+    if not lastUpdatedAt:
+        raise ValueError("Unexpected Error: lastUpdatedAt not found!")
+
+    if previous_last_updated != lastUpdatedAt:
+        print(f"Updating dataset: {datasetId}")
+        print(f"    Previous Last Updated: {previous_last_updated}")
+        print(f"    Current Last Updated : {lastUpdatedAt}")
+        # save metadata
+        with metadata_cache_path.open("w") as f:
+            json.dump(data, f)
+    else:
+        print(f"Dataset {datasetId} is up-to-date.")
+        return
+
+    # Download the dataset
+    url = (
+        f"https://api-open.data.gov.sg/v1/public/api/datasets/{datasetId}/poll-download"
+    )
+    response = requests.get(url, headers={"Content-Type": "application/json"}, json={})
+    response.raise_for_status()
+    data = response.json().get("data", {})
+
+    # a status of "DOWNLOAD_SUCCESS" indicates that the file is ready for download
+    _status = data.get("status", "")
+    # a URL to download the file should be returned
+    _url = data.get("url", "").strip()
+
+    if _status == "DOWNLOAD_SUCCESS" and _url:
+        print(f"Dowloading dataset: {datasetId}")
+        # download file
+        response = requests.get(_url)
+        with data_filepath.open("wb") as f:
+            f.write(response.content)
+        print(f"Downloaded: {data_filepath}")
+        return
+    else:
+        print(f"Failed to download dataset: {datasetId}")
+        print(f"    Status: {_status}")
+        print(f"    URL: {_url}")
+        return
 
 
 def get_data(force_update=False):
     if force_update:
-        # remove_download()
-        ...
-    # download data if it doesn't exist
-    download_data()
+        update_collection()
 
-    # merge three csv files into one
-    with CSV1.open() as f1, CSV2.open() as f2, CSV3.open() as f3:
-        reader1 = csv.DictReader(f1)
-        reader2 = csv.DictReader(f2)
-        reader3 = csv.DictReader(f3)
-        # print(reader1.fieldnames)
-        # print(reader2.fieldnames)
-        # print(reader3.fieldnames)
-        data = list(reader1) + list(reader2) + list(reader3)
+    known_child = {
+        # "d_ebc5ab87086db484f88045b47411ebc5": 0,  # Resale Flat Prices (Based on Approval Date), 1990 - 1999
+        # "d_43f493c6c50d54243cc1eab0df142d6a": 1,  # Resale Flat Prices (Based on Approval Date), 2000 - Feb 2012
+        "d_2d5ff9ea31397b66239f245f57751537": 2,  # Resale Flat Prices (Based on Registration Date), From Mar 2012 to Dec 2014
+        "d_ea9ed51da2787afaf8e51f827c304208": 3,  # Resale Flat Prices (Based on Registration Date), From Jan 2015 to Dec 2016
+        "d_8b84c4ee58e3cfc0ece0d773c8ca6abc": 4,  # Resale flat prices based on registration date from Jan-2017 onwards
+    }
+
+    file_paths = [DATA_DIR / f"{datasetId}.csv" for datasetId in known_child.keys()]
+    if not all([file_path.exists() for file_path in file_paths]):
+        raise FileNotFoundError("Missing dataset files!")
+
+    data = []
+    for file_path in file_paths:
+        with file_path.open() as f:
+            reader = csv.DictReader(f)
+            data.extend(list(reader))
 
     return data
 
